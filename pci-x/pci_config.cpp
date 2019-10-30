@@ -5,7 +5,7 @@ struct pci_config {
 	uint32_t devi_veni;
 	uint32_t stat_cmmd;
 	uint32_t clas_revi;
-	uint32_t rsvd_head_mlat_clsz;  // rsvd = reserved
+	uint32_t rsvd_head_mlat_clsz;  
 	uint32_t mbarl;
 	uint32_t mbaru;
 	uint32_t rsvd_array_1[5];
@@ -18,8 +18,15 @@ struct pci_config {
 	uint32_t rsvd_array_2[47];
 };
 
+int structure_size = 256;
 
 int main()
 {
-	printf("%i" , sizeof(struct pci_config));
+
+	if (sizeof(struct pci_config) != structure_size) {
+		printf("ERROR: Structure's size is wrong.");
+		return -1;
+	}
+
+	return 0;
 }
