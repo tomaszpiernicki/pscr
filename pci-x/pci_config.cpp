@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <pci/pci.h>	//wygl¹da na to, ¿e bilbioteka pci jest bilbiotek¹ linuxow¹.
 
 struct pci_config {
 	uint32_t devi_veni;
