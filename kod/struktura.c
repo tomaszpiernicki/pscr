@@ -3,8 +3,32 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stddef.h>
+//#include <hw/pci.h>
+//#include <hw/pci_devices.h>
 
 //#include <pci/pci.h>
+
+uint8_t* word_to_bytes( uint32_t word )
+{
+	uint8_t bytes[4];
+	
+	bytes[0] = (word >> 24) & 0xFF;
+	bytes[1] = (word >> 16) & 0xFF;
+	bytes[2] = (word >> 8) & 0xFF;
+	bytes[3] = word & 0xFF;
+	return bytes;
+}
+
+
+uint32_t bytes_to_word( uint8_t *bytes)
+{
+	uint32_t thirty_two;
+
+	thirty_two = bytes[0] | (uint32_t)bytes[1] << 8
+	    | (uint32_t)bytes[2] << 16 | (uint32_t)bytes[3] << 24;
+
+	return thirty_two;
+}
 
 struct outbound_translation {
 	uint32_t OTSAU;
@@ -172,14 +196,9 @@ struct dev_mem {
 } info;
 
 
-int main(int argc, char *argv[])
+int main(int argc, uint8_t *argv[])
 {
-	//struct pci_dev_info info;
-	int pidx = 0;
-	void* hdl;
-	int phdl;
-//	printf("%d\n", sizeof (struct crcsr_t));
-
+	printf("TESTING ATTENTION PLEASE!\n");
 	
 	printf("PCFS offset: %d\n", offsetof(struct dev_mem, pcfs) );
 	printf("PCFS size: %d\n\n", sizeof( struct pcfs_t) );
@@ -196,14 +215,44 @@ int main(int argc, char *argv[])
 	printf("rcsrc size: %d\n\n", sizeof( struct crcsr_t) );
 	
 	printf("full size: %d\n\n", sizeof( struct dev_mem) );
-	//phdl = pci_attach(NULL);
-	//hdl = pci_attach_device(NULL, (PCI_SEARCH_VENDEV | PCI INIT_ALL), pidx, &info);
-	/*if (sizeof(struct pci_config) != structure_size) {
-		printf("ERROR: Structure's size is wrong.");
-		return -1;
-	}*/
+
+  	int pidx;
+    void* hdl;
+    int phdl;
+    struct pci_dev_info inf;
+	
+	phdl = pci_attach( 0 );
+    if( phdl == -1 ) {
+        fprintf( stderr, "Unable to initialize PCI\n" );
+
+        return EXIT_FAILURE;
+    }
+    
+    memset( &inf, 0, sizeof( inf ) );
+    pidx = 0;
+    inf.VendorId = 0x10E3; //Tsi148_User_Manaul strona 213
+    inf.DeviceId = 0x0148;
+    
+    hdl = pci_attach_device( NULL, PCI_INIT_ALL, pidx, &inf );
+    if( hdl == NULL ) {
+        fprintf( stderr, "Unable to locate adapter\n" );
+    } else {
+
+	uint32_t irq = inf.Irq
+	uint32_t mem_address;
+
+    if (PCI_IS_MEM(inf.CpuBaseAddress))
+        mem_address = (PCI_MEM_ADDR(inf.CpuBaseAddress));
+	
+//	TODO mapowanie adresu fizycznego na adres wirtualny
+//	mmap ( &info, /*TODO*/);
+//	
+//		
+//        pci_detach_device( hdl );
+//    }
+
+    pci_detach( phdl );
 
 	return 0;
 }
-
 
