@@ -215,12 +215,14 @@ int main(int argc, uint8_t *argv[])
 
     printf("full size: %d\n\n", sizeof( struct dev_mem_t) );
 
-      int pidx;
+    int pidx;
     void* hdl;
     int phdl;
     struct pci_dev_info inf;
 
-    phdl = pci_attach( 0 );
+    //Uchwyt do magistrali pci
+	phdl = pci_attach( 0 );
+	
     if( phdl == -1 ) {
         fprintf( stderr, "Unable to initialize PCI\n" );
 
@@ -229,29 +231,41 @@ int main(int argc, uint8_t *argv[])
 
     memset( &inf, 0, sizeof( inf ) );
     pidx = 0;
+	
+	//wyszukiwanie urządzenia po id dostawcy oraz id urządzenia.
     inf.VendorId = 0x10E3; //Tsi148_User_Manaul strona 213
     inf.DeviceId = 0x0148;
 
+	//Wypełnienie struktury pci_dev_info resztą danych
     hdl = pci_attach_device( NULL, PCI_INIT_ALL, pidx, &inf );
+	
+	
     if( hdl == NULL ) {
-        fprintf( stderr, "Unable to locate adapter\n" );
+        fprintf( stderr, "Błąd, nie można zlokalizować adaptera\n" );
     } else {
+		//adres linii przerwań
         uint32_t irq = inf.Irq;
 
         uint32_t base_address[2];
 
         uint32_t offset = offsetof(struct pci_dev_info, PciBaseAddress);
 
+		//wypełnienie base_adress
         uint32_t status = pci_read_config32(inf.BusNumber, inf.DevFunc, 0x10, 2, &base_address );
 
         base_address[0] &= 0xFFFFF000;
 
+
         uint64_t base_address_concatenated = (base_address[1] << 32) + base_address[0];
         struct dev_mem_t* dev_mem = NULL;
+
+		//zmapowanie pamięci do struktury utworzonej do nas.
         dev_mem = (struct dev_mem_t*) mmap_device_memory(NULL, 4096,PROT_NOCACHE | PROT_READ | PROT_WRITE, MAP_SHARED, base_address_concatenated );
 
+		//sprawdzenie.
         printf("Veni: %x Devi: %x\n", dev_mem->pcfs.devi_veni & 0x0000FFFF, (dev_mem->pcfs.devi_veni & 0xFFFF0000) >> 16);
 
+	//zwolnienie zasobów
     pci_detach_device( hdl );
     pci_detach( phdl );
     }
