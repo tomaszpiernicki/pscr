@@ -7,6 +7,8 @@
 #include <hw/pci_devices.h>
 #include <sys/mman.h>
 #include "dev_mem.h"
+#include "set_master.h"
+#include "set_slave.h"
 
 int main(int argc, uint8_t *argv[])
 {
@@ -77,9 +79,19 @@ int main(int argc, uint8_t *argv[])
 		//sprawdzenie.
         printf("Veni: %x Devi: %x\n", dev_mem->pcfs.devi_veni & 0x0000FFFF, (dev_mem->pcfs.devi_veni & 0xFFFF0000) >> 16);
 
-	//zwolnienie zasobów
-    pci_detach_device( hdl );
-    pci_detach( phdl );
+        // ustawienie szyny dla master/slave
+        bus_mastering((struct dev_mem_t*) dev_mem);
+
+        // ustawienie mastera z parametrami
+        uint8_t* master0;
+        int offset_upper = 0;
+        int offset_lower = 0;
+
+        master0 = (uint8_t*) set_master((struct dev_mem_t*) dev_mem, 0, 0, 0xC1000000, 0, 0xC1010000, offset_upper, offset_lower, 0, (0<<8));
+
+        //zwolnienie zasobów
+        pci_detach_device( hdl );
+        pci_detach( phdl );
     }
     return 0;
 }
